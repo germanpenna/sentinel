@@ -7,8 +7,15 @@ import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  console.log("[webhook] DEBUG — WEBHOOK_SECRET_DEFINED:", !!webhookSecret);
+  console.log("[webhook] DEBUG — WEBHOOK_SECRET_PREFIX:", webhookSecret?.slice(0, 8) ?? "N/A");
+  console.log("[webhook] DEBUG — WEBHOOK_SECRET_LENGTH:", webhookSecret?.length ?? 0);
+
   const rawBody = Buffer.from(await req.arrayBuffer());
   const sig = req.headers.get("stripe-signature");
+  console.log("[webhook] DEBUG — SIG_HEADER_PRESENT:", !!sig);
+  console.log("[webhook] DEBUG — RAW_BODY_LENGTH:", rawBody.length);
 
   if (!sig) {
     console.warn("[webhook] Missing stripe-signature header");
