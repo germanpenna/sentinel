@@ -15,7 +15,7 @@ Colombia
 
 ## Live deployment URL
 
-https://sentinel-topaz-ten.vercel.app/
+<<PASTE YOUR VERCEL DEPLOYMENT URL HERE>>
 
 ---
 
@@ -65,3 +65,4 @@ It includes authentication, billing (Stripe), Pro gating, persistence, and a ful
 
 ---
 
+Built for the Vibe Coding Hackathon.
