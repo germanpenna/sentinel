@@ -3,6 +3,7 @@ import { getOrCreateUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import { runRealityCheck } from "@/lib/reality-check";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
