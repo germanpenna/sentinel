@@ -6,10 +6,16 @@ import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 
-// TODO: Re-enable strict signature verification for production
 export async function POST(req: NextRequest) {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  console.log("[webhook] DEBUG — WEBHOOK_SECRET_DEFINED:", !!webhookSecret);
+  console.log("[webhook] DEBUG — WEBHOOK_SECRET_PREFIX:", webhookSecret?.slice(0, 8) ?? "N/A");
+  console.log("[webhook] DEBUG — WEBHOOK_SECRET_LENGTH:", webhookSecret?.length ?? 0);
+
   const rawBody = Buffer.from(await req.arrayBuffer());
   const sig = req.headers.get("stripe-signature");
+  console.log("[webhook] DEBUG — SIG_HEADER_PRESENT:", !!sig);
+  console.log("[webhook] DEBUG — RAW_BODY_LENGTH:", rawBody.length);
 
   if (!sig) {
     console.warn("[webhook] Missing stripe-signature header");
@@ -25,21 +31,12 @@ export async function POST(req: NextRequest) {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
-    console.log(`[webhook] Verified event: ${event.type}`);
   } catch (err) {
-    console.warn("[webhook] Stripe signature verification failed, proceeding in demo mode:", (err as Error).message);
-    try {
-      event = JSON.parse(rawBody.toString()) as Stripe.Event;
-    } catch {
-      console.error("[webhook] Failed to parse raw body as JSON");
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-    }
-    if (event.type !== "checkout.session.completed") {
-      console.log(`[webhook] Demo mode: ignoring unverified event type ${event.type}`);
-      return NextResponse.json({ received: true });
-    }
-    console.log(`[webhook] Demo mode: processing ${event.type}`);
+    console.error("[webhook] Signature verification failed:", err);
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
+
+  console.log(`[webhook] Received event: ${event.type}`);
 
   if (
     event.type === "checkout.session.completed" ||
