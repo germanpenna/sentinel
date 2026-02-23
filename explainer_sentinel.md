@@ -15,7 +15,7 @@ Colombia
 
 ## Live deployment URL
 
-<<PASTE YOUR VERCEL DEPLOYMENT URL HERE>>
+https://sentinel-topaz-ten.vercel.app/
 
 ---
 
