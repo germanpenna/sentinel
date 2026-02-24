@@ -15,7 +15,7 @@ export default function Home() {
       <div className="w-full pt-20 flex flex-col items-center relative z-10">
         <Hero />
         
-        <div className="w-full relative z-20 -mt-8 pb-16 flex justify-center px-4">
+        <div id="verdict-demo" className="w-full relative z-20 -mt-8 pb-16 flex justify-center px-4 scroll-mt-20">
           <div className="w-full max-w-5xl rounded-3xl p-[1px] bg-gradient-to-b from-white/15 to-transparent shadow-[0_20px_80px_-20px_rgba(0,0,0,1)]">
             <VerdictDashboard />
           </div>

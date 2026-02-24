@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { Suspense } from "react";
 
 function PricingContent() {
   const searchParams = useSearchParams();
+  const { isSignedIn } = useUser();
   const cancelled = searchParams.get("checkout") === "cancel";
 
   const handleUpgrade = async () => {
@@ -19,9 +21,19 @@ function PricingContent() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="max-w-lg w-full space-y-8 text-center">
-        <Link href="/" className="text-sm text-neutral-500 hover:text-white transition-colors">
-          ← Back to home
-        </Link>
+        <div className="flex items-center justify-center gap-4">
+          <Link href="/" className="text-sm text-neutral-500 hover:text-white transition-colors">
+            ← Back to home
+          </Link>
+          {isSignedIn && (
+            <>
+              <span className="text-neutral-700">·</span>
+              <Link href="/app" className="text-sm text-neutral-500 hover:text-white transition-colors">
+                Go to Dashboard
+              </Link>
+            </>
+          )}
+        </div>
 
         {cancelled && (
           <div className="rounded-xl border border-risk-yellow/20 bg-risk-yellow/5 p-4 text-sm text-risk-yellow">

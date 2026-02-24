@@ -48,7 +48,7 @@ export async function POST() {
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/app/app?checkout=success`,
+      success_url: `${appUrl}/app?checkout=success`,
       cancel_url: `${appUrl}/pricing?checkout=cancel`,
       metadata: { clerkUserId: user.clerkUserId },
     });

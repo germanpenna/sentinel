@@ -350,7 +350,10 @@ function AppContent() {
   const [analysisStep, setAnalysisStep] = useState(-1);
   const [selectedRun, setSelectedRun] = useState<Run | null>(null);
   const [lastDurationMs, setLastDurationMs] = useState<number | undefined>();
+  const [checkoutVerifying, setCheckoutVerifying] = useState(false);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
+  const verdictRef = useRef<HTMLDivElement>(null);
 
   const [objective, setObjective] = useState("");
   const [kpis, setKpis] = useState<KpiField[]>([
@@ -383,6 +386,7 @@ function AppContent() {
       await fetchStatus();
       const isCheckoutSuccess = searchParams.get("checkout") === "success";
       if (isCheckoutSuccess) {
+        setCheckoutVerifying(true);
         let attempts = 0;
         const poll = async () => {
           const res = await fetch("/api/user/status");
@@ -390,14 +394,20 @@ function AppContent() {
             const data = await res.json();
             if (data.isPro) {
               setIsPro(true);
+              setCheckoutVerifying(false);
+              setCheckoutSuccess(true);
               await fetchRuns();
               setLoading(false);
+              setTimeout(() => setCheckoutSuccess(false), 8000);
               return;
             }
           }
           attempts++;
           if (attempts < 10) setTimeout(poll, 2000);
-          else setLoading(false);
+          else {
+            setCheckoutVerifying(false);
+            setLoading(false);
+          }
         };
         poll();
       } else {
@@ -452,6 +462,7 @@ function AppContent() {
         await fetchRuns();
         setObjective("");
         setKpis([{ name: "", description: "" }, { name: "", description: "" }, { name: "", description: "" }]);
+        setTimeout(() => verdictRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 200);
       }
     } catch {
       clearInterval(stepInterval);
@@ -478,7 +489,12 @@ function AppContent() {
   if (!isLoaded || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          {checkoutVerifying && (
+            <p className="text-sm text-neutral-400 animate-pulse">Verifying payment…</p>
+          )}
+        </div>
       </div>
     );
   }
@@ -526,6 +542,13 @@ function AppContent() {
             <UserButton afterSignOutUrl="/" />
           </div>
         </div>
+
+        {checkoutSuccess && (
+          <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4 flex items-center gap-3">
+            <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            <p className="text-sm text-emerald-300">Payment confirmed! You now have Pro access. Run your first Reality Check below.</p>
+          </div>
+        )}
 
         {/* Main grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -609,11 +632,13 @@ function AppContent() {
               </div>
 
               {/* Right: Latest Verdict or Analysis Progress */}
-              {showAnalysis ? (
-                <AnalysisProgress step={analysisStep} />
-              ) : latestRun ? (
-                <VerdictCard run={latestRun} durationMs={lastDurationMs} />
-              ) : null}
+              <div ref={verdictRef}>
+                {showAnalysis ? (
+                  <AnalysisProgress step={analysisStep} />
+                ) : latestRun ? (
+                  <VerdictCard run={latestRun} durationMs={lastDurationMs} />
+                ) : null}
+              </div>
             </>
           )}
         </div>
