@@ -9,6 +9,7 @@
 | `/app/app` | Dashboard alias (same component as `/app`) | Protected, Pro-gated |
 | `/app/pricing` | Pricing / upgrade page (canonical) | **Public** (excluded from middleware) |
 | `/pricing` | Pricing alias (renders same as `/app/pricing`) | Public |
+| `/app/app/pricing` | Pricing alias (same component as `/app/pricing`) | Public |
 
 ## API Routes
 

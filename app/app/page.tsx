@@ -403,7 +403,7 @@ function AppContent() {
             }
           }
           attempts++;
-          if (attempts < 10) setTimeout(poll, 2000);
+          if (attempts < 10) setTimeout(poll, 1500);
           else {
             setCheckoutVerifying(false);
             setLoading(false);
@@ -513,7 +513,7 @@ function AppContent() {
             Get unlimited Reality Checks for your executive decisions. One-time payment of $49.
           </p>
           <a
-            href="/pricing"
+            href="/app/pricing"
             className="block w-full py-3 px-6 bg-accent text-black font-semibold rounded-xl hover:bg-accent/90 transition-colors text-center"
           >
             View Pricing & Upgrade
@@ -546,7 +546,7 @@ function AppContent() {
         {checkoutSuccess && (
           <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4 flex items-center gap-3">
             <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-            <p className="text-sm text-emerald-300">Payment confirmed! You now have Pro access. Run your first Reality Check below.</p>
+            <p className="text-sm text-emerald-300">Pro unlocked. Welcome to Sentinel Pro.</p>
           </div>
         )}
 

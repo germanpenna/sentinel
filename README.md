@@ -106,6 +106,7 @@ See [ROUTES.md](./ROUTES.md) for the full route map.
 | `/app/app` | Dashboard alias (same component, handles checkout redirect) |
 | `/app/pricing` | Pricing page — canonical (**Public**, excluded from auth middleware) |
 | `/pricing` | Pricing alias |
+| `/app/app/pricing` | Pricing alias (same component) |
 | `/api/stripe/checkout` | POST — Creates Stripe Checkout session |
 | `/api/stripe/webhook` | POST — Handles Stripe webhook events |
 | `/api/runs` | GET — List runs, POST — Create a new run |
@@ -154,7 +155,7 @@ The core analysis engine (`lib/reality-check.ts`) is **fully deterministic** —
 ## How to Test End-to-End
 
 1. Sign up or log in via Clerk on `/`
-2. Navigate to `/pricing` and click "Upgrade to Pro"
+2. Navigate to `/app/pricing` and click "Upgrade to Pro"
 3. Complete Stripe Checkout (use test card `4242 4242 4242 4242`)
 4. After payment, you are redirected to `/app/app?checkout=success`
 5. The dashboard polls until `isPro` flips to `true`
