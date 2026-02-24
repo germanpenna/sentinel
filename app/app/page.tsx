@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser, UserButton } from "@clerk/nextjs";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -21,6 +21,7 @@ interface EvidenceJson {
   industry: string;
   actions24h: string[];
   executiveSummary: string;
+  boardSummary?: string;
   confidence: string;
 }
 
@@ -55,6 +56,13 @@ const RISK_COLORS: Record<string, { text: string; bg: string; dot: string }> = {
   RED: { text: "text-rose-400", bg: "bg-rose-400/10", dot: "bg-rose-400" },
 };
 
+const ANALYSIS_STEPS = [
+  "Ingesting KPIs…",
+  "Checking strategy alignment…",
+  "Computing reality score…",
+  "Generating executive verdict…",
+];
+
 function RiskBadge({ level }: { level: string }) {
   const c = RISK_COLORS[level] ?? RISK_COLORS.RED;
   return (
@@ -64,11 +72,40 @@ function RiskBadge({ level }: { level: string }) {
   );
 }
 
-function VerdictCard({ run }: { run: Run }) {
+function AnalysisProgress({ step }: { step: number }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-surface p-6 space-y-4">
+      <h2 className="text-lg font-semibold text-neutral-300">Running Analysis…</h2>
+      <div className="space-y-3">
+        {ANALYSIS_STEPS.map((label, idx) => (
+          <div key={idx} className="flex items-center gap-3">
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
+              idx < step ? "bg-accent/20" : idx === step ? "bg-accent/10" : "bg-white/5"
+            }`}>
+              {idx < step ? (
+                <svg className="w-3 h-3 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              ) : idx === step ? (
+                <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+              ) : (
+                <div className="w-2 h-2 rounded-full bg-white/20" />
+              )}
+            </div>
+            <span className={`text-sm transition-colors duration-300 ${
+              idx < step ? "text-neutral-400" : idx === step ? "text-neutral-200" : "text-neutral-600"
+            }`}>{label}</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-neutral-600 uppercase tracking-widest">Deterministic · Rules-based · No hallucinations</p>
+    </div>
+  );
+}
+
+function VerdictCard({ run, durationMs }: { run: Run; durationMs?: number }) {
   if (!isNewFormat(run)) {
     return (
       <div className="rounded-2xl border border-white/10 bg-surface p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-neutral-300">Latest Verdict</h2>
+        <h2 className="text-lg font-semibold text-neutral-300">Executive Verdict</h2>
         <div className="flex items-center gap-4">
           <div className={`text-5xl font-bold ${RISK_COLORS[run.riskLevel]?.text ?? "text-rose-400"}`}>
             {run.score}
@@ -89,10 +126,15 @@ function VerdictCard({ run }: { run: Run }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-surface p-6 space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-neutral-300">Latest Verdict</h2>
-        <span className={`text-xs px-2 py-0.5 rounded ${e.confidence === "High" ? "bg-emerald-400/10 text-emerald-400" : "bg-amber-400/10 text-amber-400"}`}>
-          {e.confidence} confidence
-        </span>
+        <h2 className="text-lg font-semibold text-neutral-300">Executive Verdict</h2>
+        <div className="flex items-center gap-2">
+          {durationMs != null && (
+            <span className="text-[10px] text-neutral-600 font-mono">Generated in {durationMs}ms</span>
+          )}
+          <span className={`text-xs px-2 py-0.5 rounded ${e.confidence === "High" ? "bg-emerald-400/10 text-emerald-400" : "bg-amber-400/10 text-amber-400"}`}>
+            {e.confidence} confidence
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
@@ -107,6 +149,13 @@ function VerdictCard({ run }: { run: Run }) {
       </div>
 
       <p className="text-sm text-neutral-300 leading-relaxed">{e.executiveSummary}</p>
+
+      {e.boardSummary && (
+        <div className="border-l-2 border-accent/30 pl-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-1">Board Summary</h3>
+          <p className="text-sm text-neutral-400 italic leading-relaxed">{e.boardSummary}</p>
+        </div>
+      )}
 
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-2">Contradictions</h3>
@@ -144,21 +193,45 @@ function VerdictCard({ run }: { run: Run }) {
   );
 }
 
-function EmptyVerdict() {
+function EmptyState({ onRunNow, onUseSample, loading }: { onRunNow: () => void; onUseSample: () => void; loading: boolean }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-surface p-6 space-y-4">
-      <h2 className="text-lg font-semibold text-neutral-300">Latest Verdict</h2>
-      <p className="text-neutral-500">No checks yet. Run your first Reality Check.</p>
-      <ul className="space-y-2 text-sm text-neutral-400">
-        <li className="flex gap-2"><span className="text-accent">✓</span> Sentinel Score with risk level</li>
-        <li className="flex gap-2"><span className="text-accent">✓</span> Contradictions & missing signals</li>
-        <li className="flex gap-2"><span className="text-accent">✓</span> 24-hour action plan</li>
+    <div className="col-span-1 lg:col-span-2 rounded-2xl border border-white/10 bg-surface p-10 text-center space-y-6">
+      <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto">
+        <svg className="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <h2 className="text-2xl font-bold mb-2">Initiate your first Reality Check</h2>
+        <p className="text-neutral-400 max-w-md mx-auto">
+          Sentinel runs a deterministic, rules-based analysis of your strategy-to-KPI alignment — delivering an audit-friendly executive verdict.
+        </p>
+      </div>
+      <ul className="inline-flex flex-col items-start gap-2 text-sm text-neutral-400">
+        <li className="flex gap-2"><span className="text-rose-400">✕</span> Contradictions between strategy &amp; metrics</li>
+        <li className="flex gap-2"><span className="text-amber-400">⚠</span> Missing signals your board should see</li>
+        <li className="flex gap-2"><span className="text-accent">→</span> 24-hour recommended actions</li>
       </ul>
+      <div className="flex items-center justify-center gap-3">
+        <button
+          onClick={onRunNow}
+          className="py-2.5 px-6 bg-accent text-black font-semibold rounded-xl hover:bg-accent/90 transition-colors"
+        >
+          Run now
+        </button>
+        <button
+          onClick={onUseSample}
+          disabled={loading}
+          className="py-2.5 px-6 border border-white/10 text-neutral-400 text-sm rounded-xl hover:border-white/20 hover:text-neutral-300 transition-colors disabled:opacity-50"
+        >
+          {loading ? "Creating…" : "Use sample data"}
+        </button>
+      </div>
     </div>
   );
 }
 
-function RunDetailModal({ run, onClose }: { run: Run; onClose: () => void }) {
+function RunDetailModal({ run, durationMs, onClose }: { run: Run; durationMs?: number; onClose: () => void }) {
   const hasNew = isNewFormat(run);
   const w = hasNew ? (run.warningsJson as WarningsJson) : null;
   const e = hasNew ? (run.evidenceJson as EvidenceJson) : null;
@@ -168,7 +241,12 @@ function RunDetailModal({ run, onClose }: { run: Run; onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
       <div className="bg-surface border border-white/10 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto p-6 space-y-4" onClick={(ev) => ev.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Run Details</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold">Executive Brief</h2>
+            {durationMs != null && (
+              <span className="text-[10px] text-neutral-600 font-mono">Generated in {durationMs}ms</span>
+            )}
+          </div>
           <button onClick={onClose} className="text-neutral-500 hover:text-neutral-300 text-xl leading-none">&times;</button>
         </div>
 
@@ -181,6 +259,13 @@ function RunDetailModal({ run, onClose }: { run: Run; onClose: () => void }) {
         </div>
 
         {e && <p className="text-sm text-neutral-300">{e.executiveSummary}</p>}
+
+        {e?.boardSummary && (
+          <div className="border-l-2 border-accent/30 pl-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-1">Board Summary</h3>
+            <p className="text-sm text-neutral-400 italic leading-relaxed">{e.boardSummary}</p>
+          </div>
+        )}
 
         {e && (
           <div>
@@ -246,6 +331,10 @@ function RunDetailModal({ run, onClose }: { run: Run; onClose: () => void }) {
             </ul>
           </div>
         )}
+
+        <div className="pt-2 border-t border-white/5">
+          <p className="text-[10px] text-neutral-600 uppercase tracking-widest">Deterministic · Audit-friendly · Rules-based analysis</p>
+        </div>
       </div>
     </div>
   );
@@ -258,7 +347,10 @@ function AppContent() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [runLoading, setRunLoading] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState(-1);
   const [selectedRun, setSelectedRun] = useState<Run | null>(null);
+  const [lastDurationMs, setLastDurationMs] = useState<number | undefined>();
+  const formRef = useRef<HTMLDivElement>(null);
 
   const [objective, setObjective] = useState("");
   const [kpis, setKpis] = useState<KpiField[]>([
@@ -322,34 +414,65 @@ function AppContent() {
     setIndustry(SAMPLE_DATA.industry);
   };
 
-  const updateKpi = (idx: number, field: keyof KpiField, value: string) => {
-    setKpis((prev) => prev.map((k, i) => (i === idx ? { ...k, [field]: value } : k)));
-  };
-
-  const handleRunCheck = async () => {
+  const submitRun = async (payload: { objective: string; kpis: KpiField[]; industry: string }) => {
     setError("");
-    if (!objective.trim()) { setError("Objective is required."); return; }
-    if (kpis.some((k) => !k.name.trim())) { setError("All 3 KPI names are required."); return; }
-
     setRunLoading(true);
+    setAnalysisStep(0);
+
+    const stepInterval = setInterval(() => {
+      setAnalysisStep((prev) => {
+        if (prev >= ANALYSIS_STEPS.length - 1) {
+          clearInterval(stepInterval);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 400);
+
+    const t0 = performance.now();
     try {
       const res = await fetch("/api/runs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ objective, kpis, industry }),
+        body: JSON.stringify(payload),
       });
+      const elapsed = Math.round(performance.now() - t0);
+      clearInterval(stepInterval);
+
+      const minDelay = Math.max(0, 1800 - elapsed);
+      await new Promise((r) => setTimeout(r, minDelay));
+
+      setAnalysisStep(ANALYSIS_STEPS.length);
+
       if (!res.ok) {
         const data = await res.json();
         setError(data.error ?? "Something went wrong.");
       } else {
+        setLastDurationMs(elapsed);
         await fetchRuns();
         setObjective("");
         setKpis([{ name: "", description: "" }, { name: "", description: "" }, { name: "", description: "" }]);
       }
     } catch {
+      clearInterval(stepInterval);
       setError("Network error. Please try again.");
     }
     setRunLoading(false);
+    setAnalysisStep(-1);
+  };
+
+  const handleRunCheck = async () => {
+    if (!objective.trim()) { setError("Objective is required."); return; }
+    if (kpis.some((k) => !k.name.trim())) { setError("All 3 KPI names are required."); return; }
+    await submitRun({ objective, kpis, industry });
+  };
+
+  const handleUseSample = async () => {
+    await submitRun(SAMPLE_DATA);
+  };
+
+  const updateKpi = (idx: number, field: keyof KpiField, value: string) => {
+    setKpis((prev) => prev.map((k, i) => (i === idx ? { ...k, [field]: value } : k)));
   };
 
   if (!isLoaded || loading) {
@@ -386,6 +509,8 @@ function AppContent() {
 
   const latestRun = runs[0];
   const recentRuns = runs.slice(0, 5);
+  const hasRuns = runs.length > 0;
+  const showAnalysis = analysisStep >= 0;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -394,7 +519,7 @@ function AppContent() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold">Sentinel Dashboard</h1>
-            <p className="text-neutral-500 text-sm mt-1">Reality-check your KPIs against the objectives you claim.</p>
+            <p className="text-neutral-500 text-sm mt-1">Executive-grade, rules-based reality check for your KPIs.</p>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-400/10 text-emerald-400">PRO</span>
@@ -404,8 +529,98 @@ function AppContent() {
 
         {/* Main grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left: Form */}
-          <div className="rounded-2xl border border-white/10 bg-surface p-6 space-y-4">
+          {!hasRuns && !showAnalysis ? (
+            <EmptyState
+              onRunNow={() => formRef.current?.scrollIntoView({ behavior: "smooth" })}
+              onUseSample={handleUseSample}
+              loading={runLoading}
+            />
+          ) : (
+            <>
+              {/* Left: Form */}
+              <div ref={formRef} className="rounded-2xl border border-white/10 bg-surface p-6 space-y-4">
+                <h2 className="text-lg font-semibold text-neutral-300">Run a Reality Check</h2>
+
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500 block mb-1">Objective</label>
+                  <textarea
+                    value={objective}
+                    onChange={(ev) => setObjective(ev.target.value)}
+                    placeholder="Example: Improve profitability without slowing growth."
+                    rows={3}
+                    className="w-full bg-background border border-white/10 rounded-xl px-4 py-2.5 text-sm text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-accent/50 resize-none"
+                  />
+                </div>
+
+                {kpis.map((kpi, idx) => (
+                  <div key={idx} className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500 block mb-1">KPI {idx + 1} Name *</label>
+                      <input
+                        value={kpi.name}
+                        onChange={(ev) => updateKpi(idx, "name", ev.target.value)}
+                        placeholder={`KPI ${idx + 1} name`}
+                        className="w-full bg-background border border-white/10 rounded-xl px-4 py-2 text-sm text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-accent/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500 block mb-1">Description</label>
+                      <input
+                        value={kpi.description}
+                        onChange={(ev) => updateKpi(idx, "description", ev.target.value)}
+                        placeholder="Optional description"
+                        className="w-full bg-background border border-white/10 rounded-xl px-4 py-2 text-sm text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-accent/50"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500 block mb-1">Industry</label>
+                  <select
+                    value={industry}
+                    onChange={(ev) => setIndustry(ev.target.value)}
+                    className="w-full bg-background border border-white/10 rounded-xl px-4 py-2 text-sm text-neutral-200 focus:outline-none focus:border-accent/50"
+                  >
+                    {INDUSTRIES.map((ind) => (
+                      <option key={ind} value={ind}>{ind}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {error && <p className="text-rose-400 text-sm">{error}</p>}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleRunCheck}
+                    disabled={runLoading}
+                    className="flex-1 py-2.5 px-6 bg-accent text-black font-semibold rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-50"
+                  >
+                    {runLoading ? "Analyzing…" : "Run Reality Check"}
+                  </button>
+                  <button
+                    onClick={fillSample}
+                    disabled={runLoading}
+                    className="py-2.5 px-4 border border-white/10 text-neutral-400 text-sm rounded-xl hover:border-white/20 hover:text-neutral-300 transition-colors disabled:opacity-50"
+                  >
+                    Use a sample
+                  </button>
+                </div>
+              </div>
+
+              {/* Right: Latest Verdict or Analysis Progress */}
+              {showAnalysis ? (
+                <AnalysisProgress step={analysisStep} />
+              ) : latestRun ? (
+                <VerdictCard run={latestRun} durationMs={lastDurationMs} />
+              ) : null}
+            </>
+          )}
+        </div>
+
+        {/* Form (shown below empty state so "Run now" can scroll to it) */}
+        {!hasRuns && !showAnalysis && (
+          <div ref={formRef} className="rounded-2xl border border-white/10 bg-surface p-6 space-y-4 max-w-2xl mx-auto">
             <h2 className="text-lg font-semibold text-neutral-300">Run a Reality Check</h2>
 
             <div>
@@ -473,17 +688,14 @@ function AppContent() {
               </button>
             </div>
           </div>
+        )}
 
-          {/* Right: Latest Verdict */}
-          {latestRun ? <VerdictCard run={latestRun} /> : <EmptyVerdict />}
-        </div>
-
-        {/* Recent Runs */}
+        {/* Decision History */}
         {recentRuns.length > 0 && (
           <div className="rounded-2xl border border-white/10 bg-surface p-6">
-            <h2 className="text-lg font-semibold text-neutral-300 mb-4">Recent Runs</h2>
+            <h2 className="text-lg font-semibold text-neutral-300 mb-4">Decision History</h2>
             <div className="space-y-2">
-              {recentRuns.map((run) => {
+              {recentRuns.map((run, idx) => {
                 const c = RISK_COLORS[run.riskLevel] ?? RISK_COLORS.RED;
                 const ev = isNewFormat(run) ? (run.evidenceJson as EvidenceJson) : null;
                 return (
@@ -495,12 +707,15 @@ function AppContent() {
                       {ev && <span className="text-sm text-neutral-500 truncate">{ev.objective.slice(0, 50)}</span>}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
+                      {idx === 0 && lastDurationMs != null && (
+                        <span className="text-[10px] text-neutral-600 font-mono">{lastDurationMs}ms</span>
+                      )}
                       <span className="text-xs text-neutral-500">{new Date(run.createdAt).toLocaleDateString()}</span>
                       <button
                         onClick={() => setSelectedRun(run)}
                         className="text-xs text-accent hover:text-accent/80 font-medium"
                       >
-                        View
+                        Open Brief
                       </button>
                     </div>
                   </div>
@@ -509,15 +724,15 @@ function AppContent() {
             </div>
           </div>
         )}
-
-        {runs.length === 0 && (
-          <div className="text-center py-12 text-neutral-500">
-            <p>No runs yet. Fill in the form above and run your first Reality Check.</p>
-          </div>
-        )}
       </div>
 
-      {selectedRun && <RunDetailModal run={selectedRun} onClose={() => setSelectedRun(null)} />}
+      {selectedRun && (
+        <RunDetailModal
+          run={selectedRun}
+          durationMs={selectedRun.id === runs[0]?.id ? lastDurationMs : undefined}
+          onClose={() => setSelectedRun(null)}
+        />
+      )}
     </div>
   );
 }

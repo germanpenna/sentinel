@@ -55,7 +55,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = runRealityCheck({ objective, kpis, industry });
+    const runCount = await prisma.run.count({ where: { userId: user.id } });
+    const result = runRealityCheck({ objective, kpis, industry, runIndex: runCount });
 
     const run = await prisma.run.create({
       data: {
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
           industry: industry ?? "Other",
           actions24h: result.actions24h,
           executiveSummary: result.executiveSummary,
+          boardSummary: result.boardSummary,
           confidence: result.confidence,
         },
       },

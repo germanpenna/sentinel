@@ -43,9 +43,21 @@ export function Hero() {
         </motion.div>
 
         {/* Subheadline */}
-        <motion.p variants={itemVariants} className="text-lg md:text-xl text-neutral-400 max-w-2xl mb-10 text-balance leading-relaxed">
+        <motion.p variants={itemVariants} className="text-lg md:text-xl text-neutral-400 max-w-2xl mb-6 text-balance leading-relaxed">
           Sentinel analyzes the gap between your stated strategy, your governing KPIs, and actual performance—delivering an unvarnished board-level verdict in under 60 seconds.
         </motion.p>
+
+        {/* Proof element */}
+        <motion.div variants={itemVariants} className="flex flex-col items-center gap-3 mb-10">
+          <p className="text-sm text-neutral-500 tracking-wide">Built for exec teams. Deterministic rules. No hallucinations.</p>
+          <div className="flex items-center gap-2">
+            {["Audit-friendly", "Deterministic", "Decision-ready"].map((badge) => (
+              <span key={badge} className="text-[11px] font-medium px-3 py-1 rounded-full border border-white/10 text-neutral-400 bg-surface/50">
+                {badge}
+              </span>
+            ))}
+          </div>
+        </motion.div>
 
         {/* CTAs */}
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-4">
