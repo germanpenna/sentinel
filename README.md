@@ -102,9 +102,9 @@ See [ROUTES.md](./ROUTES.md) for the full route map.
 | Route | Description |
 |---|---|
 | `/` | Landing page |
-| `/app/app` | Dashboard — canonical (Protected, Pro-gated) |
+| `/app` | Dashboard — canonical (Protected, Pro-gated) |
+| `/app/app` | Dashboard alias (same component, handles checkout redirect) |
 | `/app/pricing` | Pricing page — canonical (**Public**, excluded from auth middleware) |
-| `/app` | Dashboard alias |
 | `/pricing` | Pricing alias |
 | `/api/stripe/checkout` | POST — Creates Stripe Checkout session |
 | `/api/stripe/webhook` | POST — Handles Stripe webhook events |

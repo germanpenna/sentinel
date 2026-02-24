@@ -11,11 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return NextResponse.json({
-      isPro: user.isPro,
-      email: user.email,
-      stripeCustomerId: user.stripeCustomerId,
-    });
+    return NextResponse.json({ isPro: user.isPro });
   } catch (error) {
     console.error("GET /api/user/status error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
