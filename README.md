@@ -170,3 +170,4 @@ The core analysis engine (`lib/reality-check.ts`) is **fully deterministic** —
 3. Set all environment variables in Vercel dashboard
 4. Configure Stripe webhook endpoint: `https://your-domain.vercel.app/api/stripe/webhook`
 5. Deploy!
+
