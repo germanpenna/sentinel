@@ -1,5 +1,1 @@
-import { redirect } from "next/navigation";
-
-export default function LegacyAppRedirect() {
-  redirect("/app");
-}
+export { default } from "../page";

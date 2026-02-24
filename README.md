@@ -23,6 +23,7 @@ npm install
 ### 2. Set environment variables
 
 Copy `.env.example` to `.env` and fill in your values:
+(A env.example file is added if .env.example is not visible)
 
 ```bash
 cp .env.example .env
@@ -67,11 +68,14 @@ Copy the webhook signing secret it prints and set it as `STRIPE_WEBHOOK_SECRET` 
 | Route | Description |
 |---|---|
 | `/` | Landing page |
-| `/app` | Protected dashboard (Pro-gated) |
-| `/pricing` | Pricing page with upgrade button |
+| `/app/app` | Dashboard — canonical (Protected, Pro-gated) |
+| `/app/pricing` | Pricing page — canonical |
+| `/app` | Dashboard alias (same as `/app/app`) |
+| `/pricing` | Pricing alias (same as `/app/pricing`) |
 | `/api/stripe/checkout` | POST — Creates Stripe Checkout session |
 | `/api/stripe/webhook` | POST — Handles Stripe webhook events |
 | `/api/runs` | GET — List runs, POST — Create a new run |
+| `/api/user/status` | GET — Current user Pro status |
 
 ## How It Works
 
