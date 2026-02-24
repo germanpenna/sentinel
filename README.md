@@ -104,3 +104,4 @@ Copy the webhook signing secret it prints and set it as `STRIPE_WEBHOOK_SECRET` 
 6. Fill in an objective + 3 KPIs and click "Run Reality Check"
 7. See the Sentinel Score, contradictions, missing signals, and 24h actions
 8. Verify the run appears in "Recent Runs"
+
