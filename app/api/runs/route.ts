@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
 
     if (!user.isPro) {
       return NextResponse.json(
-        { error: "Pro subscription required. Upgrade at /pricing." },
-        { status: 403 }
+        { error: "Pro subscription required.", upgradeUrl: "/pricing" },
+        { status: 402 }
       );
     }
 

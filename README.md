@@ -8,7 +8,7 @@ Executive Decision Intelligence SaaS. Get a board-level reality check in under 6
 - **TypeScript** + **Tailwind CSS**
 - **Clerk** — Authentication
 - **Stripe** — Payments (Checkout)
-- **Prisma 7** — ORM
+- **Prisma 5** — ORM
 - **Supabase Postgres** — Database
 - **Vercel** — Deployment
 
@@ -89,3 +89,14 @@ Copy the webhook signing secret it prints and set it as `STRIPE_WEBHOOK_SECRET` 
 3. Set all environment variables in Vercel dashboard
 4. Configure Stripe webhook endpoint: `https://your-domain.vercel.app/api/stripe/webhook`
 5. Deploy!
+
+## How to Test End-to-End
+
+1. Sign up or log in via Clerk on `/`
+2. Navigate to `/pricing` and click "Upgrade to Pro"
+3. Complete Stripe Checkout (use test card `4242 4242 4242 4242`)
+4. After payment, you are redirected to `/app?checkout=success`
+5. The dashboard polls until `isPro` flips to `true`
+6. Fill in an objective + 3 KPIs and click "Run Reality Check"
+7. See the Sentinel Score, contradictions, missing signals, and 24h actions
+8. Verify the run appears in "Recent Runs"

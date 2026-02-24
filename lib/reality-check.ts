@@ -9,6 +9,11 @@ interface RealityCheckInput {
   industry?: string;
 }
 
+interface Finding {
+  text: string;
+  isAdvisory: boolean;
+}
+
 interface RealityCheckResult {
   score: number;
   riskLevel: "GREEN" | "YELLOW" | "RED";
@@ -41,16 +46,16 @@ function kpisMatchCategory(kpis: KpiInput[], category: string): boolean {
   );
 }
 
-const FALLBACK_CONTRADICTIONS = [
-  "Your objective is directional, but your KPIs don't prove causality — only movement.",
-  "KPI ownership is unclear: the same number can be 'up' for the wrong reason.",
-  "The KPI set lacks counter-metrics that prevent narrative gaming.",
+const FALLBACK_CONTRADICTIONS: Finding[] = [
+  { text: "Your objective is directional, but your KPIs don't prove causality — only movement.", isAdvisory: true },
+  { text: "KPI ownership is unclear: the same number can be 'up' for the wrong reason.", isAdvisory: true },
+  { text: "The KPI set lacks counter-metrics that prevent narrative gaming.", isAdvisory: true },
 ];
 
-const FALLBACK_MISSING = [
-  "No KPI validates customer retention (churn/NRR).",
-  "No KPI validates acquisition efficiency (CAC/payback).",
-  "No KPI validates margin quality (gross/contribution margin).",
+const FALLBACK_MISSING: Finding[] = [
+  { text: "No KPI validates customer retention (churn/NRR).", isAdvisory: true },
+  { text: "No KPI validates acquisition efficiency (CAC/payback).", isAdvisory: true },
+  { text: "No KPI validates margin quality (gross/contribution margin).", isAdvisory: true },
 ];
 
 const ACTIONS = [
@@ -61,17 +66,18 @@ const ACTIONS = [
 
 export function runRealityCheck(input: RealityCheckInput): RealityCheckResult {
   const { objective, kpis } = input;
-  const contradictions: string[] = [];
-  const missingSignals: string[] = [];
+  const contradictions: Finding[] = [];
+  const missingSignals: Finding[] = [];
   let directMatches = 0;
 
   if (
     textMatchesCategory(objective, "growth") &&
     kpisMatchCategory(kpis, "efficiency")
   ) {
-    contradictions.push(
-      "Growth is being celebrated while efficiency signals (CAC/Payback) suggest you may be buying revenue."
-    );
+    contradictions.push({
+      text: "Growth is being celebrated while efficiency signals (CAC/Payback) suggest you may be buying revenue.",
+      isAdvisory: false,
+    });
     directMatches++;
   }
 
@@ -80,9 +86,10 @@ export function runRealityCheck(input: RealityCheckInput): RealityCheckResult {
     kpisMatchCategory(kpis, "growth") &&
     !kpisMatchCategory(kpis, "profitability")
   ) {
-    contradictions.push(
-      "You claim profitability, but you're not tracking margin-quality signals that prove it."
-    );
+    contradictions.push({
+      text: "You claim profitability, but you're not tracking margin-quality signals that prove it.",
+      isAdvisory: false,
+    });
     directMatches++;
   }
 
@@ -91,9 +98,10 @@ export function runRealityCheck(input: RealityCheckInput): RealityCheckResult {
     kpisMatchCategory(kpis, "growth") &&
     !kpisMatchCategory(kpis, "efficiency")
   ) {
-    contradictions.push(
-      "Efficiency is your stated goal, but your KPIs are optimized for growth — not cost discipline."
-    );
+    contradictions.push({
+      text: "Efficiency is your stated goal, but your KPIs are optimized for growth — not cost discipline.",
+      isAdvisory: false,
+    });
     directMatches++;
   }
 
@@ -102,9 +110,10 @@ export function runRealityCheck(input: RealityCheckInput): RealityCheckResult {
     kpisMatchCategory(kpis, "retention") &&
     !kpisMatchCategory(kpis, "activation")
   ) {
-    contradictions.push(
-      "You mention activation, but your KPIs track retention without measuring funnel conversion."
-    );
+    contradictions.push({
+      text: "You mention activation, but your KPIs track retention without measuring funnel conversion.",
+      isAdvisory: false,
+    });
     directMatches++;
   }
 
@@ -119,9 +128,10 @@ export function runRealityCheck(input: RealityCheckInput): RealityCheckResult {
     textMatchesCategory(objective, "retention") &&
     !kpisMatchCategory(kpis, "retention")
   ) {
-    missingSignals.push(
-      "Retention is a stated objective, but retention/churn is not among your KPIs."
-    );
+    missingSignals.push({
+      text: "Retention is a stated objective, but retention/churn is not among your KPIs.",
+      isAdvisory: false,
+    });
     directMatches++;
   }
 
@@ -129,48 +139,54 @@ export function runRealityCheck(input: RealityCheckInput): RealityCheckResult {
     textMatchesCategory(objective, "reliability") &&
     !kpisMatchCategory(kpis, "reliability")
   ) {
-    missingSignals.push(
-      "Reliability is a stated objective, but uptime/latency/incidents are not tracked."
-    );
+    missingSignals.push({
+      text: "Reliability is a stated objective, but uptime/latency/incidents are not tracked.",
+      isAdvisory: false,
+    });
     directMatches++;
   }
 
   if (
     !kpisMatchCategory(kpis, "retention") &&
-    !missingSignals.some((s) => s.includes("retention"))
+    !missingSignals.some((s) => s.text.includes("retention"))
   ) {
-    missingSignals.push("No KPI validates customer retention (churn/NRR).");
+    missingSignals.push({ text: "No KPI validates customer retention (churn/NRR).", isAdvisory: true });
   }
 
   if (
     !kpisMatchCategory(kpis, "efficiency") &&
-    !missingSignals.some((s) => s.includes("efficiency"))
+    !missingSignals.some((s) => s.text.includes("efficiency"))
   ) {
-    missingSignals.push(
-      "No KPI validates acquisition efficiency (CAC/payback)."
-    );
+    missingSignals.push({
+      text: "No KPI validates acquisition efficiency (CAC/payback).",
+      isAdvisory: true,
+    });
   }
 
   if (
     !kpisMatchCategory(kpis, "profitability") &&
     missingSignals.length < 2
   ) {
-    missingSignals.push(
-      "No KPI validates margin quality (gross/contribution margin)."
-    );
+    missingSignals.push({
+      text: "No KPI validates margin quality (gross/contribution margin).",
+      isAdvisory: true,
+    });
   }
 
   while (missingSignals.length < 2) {
     const fallback =
-      FALLBACK_MISSING.find((f) => !missingSignals.includes(f));
+      FALLBACK_MISSING.find((f) => !missingSignals.some((s) => s.text === f.text));
     if (fallback) missingSignals.push(fallback);
     else break;
   }
   const finalMissing = missingSignals.slice(0, 2);
 
+  const scoredContradictions = finalContradictions.filter((f) => !f.isAdvisory).length;
+  const scoredMissing = finalMissing.filter((f) => !f.isAdvisory).length;
+
   let score = 85;
-  score -= finalContradictions.length * 15;
-  score -= finalMissing.length * 10;
+  score -= scoredContradictions * 15;
+  score -= scoredMissing * 10;
   score = Math.max(0, Math.min(100, score));
 
   const riskLevel: "GREEN" | "YELLOW" | "RED" =
@@ -178,19 +194,22 @@ export function runRealityCheck(input: RealityCheckInput): RealityCheckResult {
 
   const confidence: "High" | "Medium" = directMatches >= 2 ? "High" : "Medium";
 
+  const contradictionTexts = finalContradictions.map((f) => f.text);
+  const missingTexts = finalMissing.map((f) => f.text);
+
   const riskWord =
     riskLevel === "GREEN"
       ? "acceptable"
       : riskLevel === "YELLOW"
         ? "moderate"
         : "critical";
-  const executiveSummary = `Your objective "${objective.slice(0, 80)}" carries ${riskWord} risk (score ${score}/100). ${finalContradictions[0]} Additionally, ${finalMissing[0]?.toLowerCase()}`;
+  const executiveSummary = `Your objective "${objective.slice(0, 80)}" carries ${riskWord} risk (score ${score}/100). ${contradictionTexts[0]} Additionally, ${missingTexts[0]?.toLowerCase()}`;
 
   return {
     score,
     riskLevel,
-    contradictions: finalContradictions,
-    missingSignals: finalMissing,
+    contradictions: contradictionTexts,
+    missingSignals: missingTexts,
     actions24h: ACTIONS,
     executiveSummary,
     confidence,
