@@ -6,7 +6,7 @@
 |---|---|---|
 | `/` | Landing page | Public |
 | `/app/app` | Dashboard (canonical) | Protected, Pro-gated |
-| `/app/pricing` | Pricing / upgrade page | Public |
+| `/app/pricing` | Pricing / upgrade page | **Public** (excluded from middleware protection) |
 | `/app` | Dashboard alias (renders same as `/app/app`) | Protected, Pro-gated |
 | `/pricing` | Pricing alias (renders same as `/app/pricing`) | Public |
 
@@ -19,3 +19,14 @@
 | `/api/runs` | GET | List user's runs | Protected |
 | `/api/runs` | POST | Create a new reality check run | Protected, Pro-gated |
 | `/api/user/status` | GET | Returns current user's isPro status | Protected |
+
+## Middleware Logic
+
+The Clerk middleware protects `/app/app(.*)` and `/app$` but **explicitly excludes** `/app/pricing(.*)` so the pricing page is accessible to logged-out users.
+
+## Stripe Redirect URLs
+
+| Event | URL |
+|---|---|
+| Checkout success | `/app/app?checkout=success` |
+| Checkout cancel | `/app/pricing?checkout=cancel` |

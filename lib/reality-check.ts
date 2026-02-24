@@ -157,20 +157,16 @@ export function runRealityCheck(input: RealityCheckInput): RealityCheckResult {
   }
   const finalMissing = missingSignals.slice(0, 2);
 
-  const scoredContradictions = finalContradictions.filter((f) => !f.isAdvisory).length;
-  const scoredMissing = finalMissing.filter((f) => !f.isAdvisory).length;
+  // Spec-aligned scoring:
+  // Base: 85, -15 per contradiction (max 3), -10 per missing signal (max 2), clamp [0, 100]
+  const numContradictions = finalContradictions.length;
+  const numMissing = finalMissing.length;
+  let score = 85 - numContradictions * 15 - numMissing * 10;
+  score = Math.max(0, Math.min(100, score));
 
-  const objectiveLen = objective.length;
-  const kpiCoverage = Object.keys(KEYWORD_SETS).filter((cat) => kpisMatchCategory(kpis, cat)).length;
-  const baseScore = 82 + (hash % 7) - (objectiveLen % 5);
-  let score = baseScore;
-  score -= scoredContradictions * (13 + (hash % 5));
-  score -= scoredMissing * (8 + (hash % 4));
-  score += kpiCoverage * 3;
-  score = Math.max(12, Math.min(95, score));
-
+  // Spec-aligned risk thresholds: GREEN >= 75, YELLOW 50-74, RED < 50
   const riskLevel: "GREEN" | "YELLOW" | "RED" =
-    score >= 72 ? "GREEN" : score >= 45 ? "YELLOW" : "RED";
+    score >= 75 ? "GREEN" : score >= 50 ? "YELLOW" : "RED";
 
   const confidence: "High" | "Medium" = directMatches >= 2 ? "High" : "Medium";
 
