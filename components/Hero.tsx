@@ -90,14 +90,12 @@ export function Hero() {
             <Play className="w-4 h-4 text-neutral-400" fill="currentColor" />
             Review sample verdict
           </a>
-          {!isSignedIn && (
-            <a
-              href="/app/pricing"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-white/10 text-neutral-400 text-sm font-medium hover:text-neutral-200 hover:border-white/20 transition-all duration-300"
-            >
-              See Plans
-            </a>
-          )}
+          <a
+            href="/pricing"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-white/10 text-neutral-400 text-sm font-medium hover:text-neutral-200 hover:border-white/20 transition-all duration-300"
+          >
+            See pricing →
+          </a>
         </motion.div>
       </motion.div>
     </section>

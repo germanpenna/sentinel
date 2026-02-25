@@ -2,6 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrCreateUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 import { runRealityCheck } from "@/lib/reality-check";
+import { z } from "zod";
+
+const RunInputSchema = z.object({
+  objective: z.string().min(1, "Objective is required."),
+  kpis: z
+    .array(
+      z.object({
+        name: z.string().min(1, "KPI name is required."),
+        description: z.string().optional().default(""),
+      })
+    )
+    .min(3, "At least 3 KPIs are required."),
+  industry: z.string().optional().default("Other"),
+});
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,19 +55,17 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { objective, kpis, industry } = body;
+    const parsed = RunInputSchema.safeParse(body);
 
-    if (
-      !objective ||
-      !Array.isArray(kpis) ||
-      kpis.length < 3 ||
-      !kpis.every((k: { name?: string }) => k.name)
-    ) {
+    if (!parsed.success) {
+      const messages = parsed.error.issues.map((i) => i.message);
       return NextResponse.json(
-        { error: "Objective and 3 KPIs with names are required." },
+        { error: messages.join(" "), details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+
+    const { objective, kpis, industry } = parsed.data;
 
     const runCount = await prisma.run.count({ where: { userId: user.id } });
     const result = runRealityCheck({ objective, kpis, industry, runIndex: runCount });

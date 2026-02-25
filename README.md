@@ -10,6 +10,7 @@ Executive Decision Intelligence SaaS. Get a board-level reality check in under 6
 - **Stripe** — Payments (Checkout)
 - **Prisma 5** — ORM
 - **Supabase Postgres** — Database
+- **Zod** — Request validation
 - **Vercel** — Deployment
 
 ## Architecture
@@ -19,7 +20,7 @@ sentinel/
 ├── app/
 │   ├── page.tsx              # Landing page (public)
 │   ├── app/
-│   │   ├── page.tsx          # Dashboard (protected, Pro-gated)
+│   │   ├── page.tsx          # Dashboard canonical (protected, Pro-gated)
 │   │   └── pricing/
 │   │       └── page.tsx      # Pricing page (public under /app)
 │   ├── pricing/
@@ -56,6 +57,7 @@ npm install
 ### 2. Set environment variables
 
 Copy `.env.example` to `.env` and fill in your values:
+(A env.example file is added just in case .env.example is not visible)
 
 ```bash
 cp .env.example .env
@@ -102,8 +104,8 @@ See [ROUTES.md](./ROUTES.md) for the full route map.
 | Route | Description |
 |---|---|
 | `/` | Landing page |
-| `/app` | Dashboard — canonical (Protected, Pro-gated) |
-| `/app/app` | Dashboard alias (same component, handles checkout redirect) |
+| `/app` | Dashboard (canonical, protected, Pro-gated) |
+| `/app/app` | Dashboard alias (handles Stripe checkout redirect) |
 | `/app/pricing` | Pricing page — canonical (**Public**, excluded from auth middleware) |
 | `/pricing` | Pricing alias |
 | `/app/app/pricing` | Pricing alias (same component) |
