@@ -4,7 +4,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import Stripe from "stripe";
+
+function isStripeEventSchemaDriftError(error: unknown) {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
+  if (error.code !== "P2022") return false;
+  const column = (error.meta as { column?: string } | undefined)?.column;
+  return typeof column === "string" && column.startsWith("StripeEvent.");
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -31,13 +39,23 @@ export async function POST(req: NextRequest) {
 
   console.log(`[webhook] Received event: ${event.type}`);
 
-  const existing = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
-  if (existing) {
-    console.log(`[webhook] Skipping already-processed event: ${event.id}`);
-    return NextResponse.json({ received: true, deduplicated: true });
-  }
+  try {
+    const existing = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
+    if (existing) {
+      console.log(`[webhook] Skipping already-processed event: ${event.id}`);
+      return NextResponse.json({ received: true, deduplicated: true });
+    }
 
-  await prisma.stripeEvent.create({ data: { id: event.id, type: event.type } });
+    await prisma.stripeEvent.create({ data: { id: event.id, type: event.type } });
+  } catch (error) {
+    if (isStripeEventSchemaDriftError(error)) {
+      console.warn(
+        "[webhook] StripeEvent table is missing expected columns. Continuing without webhook deduplication for this request."
+      );
+    } else {
+      throw error;
+    }
+  }
 
   if (
     event.type === "checkout.session.completed" ||
