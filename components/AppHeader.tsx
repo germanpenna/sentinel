@@ -15,7 +15,7 @@ export function AppHeader() {
         </Link>
         <div className="flex items-center gap-4">
           {isSignedIn && (
-            <Link href="/app" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors">
+            <Link href="/app/app" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors">
               Dashboard
             </Link>
           )}

@@ -25,7 +25,7 @@ export function Hero() {
 
   const handleCTA = () => {
     if (isSignedIn) {
-      router.push("/app");
+      router.push("/app/app");
     }
   };
 
@@ -66,7 +66,8 @@ export function Hero() {
           </div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-4">
+        <motion.div variants={itemVariants} className="flex flex-col items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
           {isSignedIn ? (
             <button
               onClick={handleCTA}
@@ -76,7 +77,7 @@ export function Hero() {
               <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <SignInButton mode="modal" forceRedirectUrl="/app">
+            <SignInButton mode="modal" forceRedirectUrl="/app/app">
               <button className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-accent text-black font-semibold hover:bg-accent/90 transition-all shadow-[0_0_40px_-10px_rgba(0,229,153,0.4)] hover:shadow-[0_0_60px_-15px_rgba(0,229,153,0.6)] hover:-translate-y-0.5 duration-300">
                 Initiate Reality Check
                 <ArrowRight className="w-4 h-4" />
@@ -90,12 +91,12 @@ export function Hero() {
             <Play className="w-4 h-4 text-neutral-400" fill="currentColor" />
             Review sample verdict
           </a>
+          </div>
           <a
-            href="/pricing"
-            className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-white/5 backdrop-blur-md border border-accent/20 text-accent font-medium hover:bg-accent/10 hover:border-accent/40 transition-all duration-300"
+            href="/app/pricing"
+            className="text-sm text-neutral-400 hover:text-accent transition-colors underline underline-offset-4 decoration-white/20 hover:decoration-accent"
           >
-            See pricing — $49 one-time
-            <ArrowRight className="w-4 h-4" />
+            View pricing and upgrade options
           </a>
         </motion.div>
       </motion.div>

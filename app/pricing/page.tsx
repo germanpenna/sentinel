@@ -28,7 +28,7 @@ function PricingContent() {
           {isSignedIn && (
             <>
               <span className="text-neutral-700">·</span>
-              <Link href="/app" className="text-sm text-neutral-500 hover:text-white transition-colors">
+              <Link href="/app/app" className="text-sm text-neutral-500 hover:text-white transition-colors">
                 Go to Dashboard
               </Link>
             </>

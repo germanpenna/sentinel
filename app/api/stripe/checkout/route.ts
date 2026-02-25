@@ -30,13 +30,11 @@ export async function POST() {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const stripePriceId = process.env.STRIPE_PRICE_ID;
 
-    const session = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId,
-      mode: "payment",
-      payment_method_types: ["card"],
-      line_items: [
-        {
+    const lineItem = stripePriceId
+      ? { price: stripePriceId, quantity: 1 }
+      : {
           price_data: {
             currency: "usd",
             product_data: {
@@ -46,8 +44,17 @@ export async function POST() {
             unit_amount: 4900,
           },
           quantity: 1,
-        },
-      ],
+        };
+
+    if (!stripePriceId) {
+      console.warn("[checkout] STRIPE_PRICE_ID not set; using inline price_data fallback.");
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      customer: stripeCustomerId,
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [lineItem],
       success_url: `${appUrl}/app/app?checkout=success`,
       cancel_url: `${appUrl}/app/pricing?checkout=cancel`,
       metadata: { clerkUserId: user.clerkUserId },

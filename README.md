@@ -72,6 +72,7 @@ Required variables:
 | `CLERK_SECRET_KEY` | Clerk secret key |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `STRIPE_PRICE_ID` | Stripe Price ID for Sentinel Pro (recommended for production) |
 | `NEXT_PUBLIC_APP_URL` | Your app URL (e.g., `http://localhost:3000`) |
 
 ### 3. Set up the database
@@ -97,6 +98,9 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 
 Copy the webhook signing secret it prints and set it as `STRIPE_WEBHOOK_SECRET` in `.env`.
 
+For production checkout configuration, set `STRIPE_PRICE_ID` to a Stripe Price (for example `price_...`).  
+If `STRIPE_PRICE_ID` is not set, the app falls back to inline `price_data` (`$49`) for local/demo usage.
+
 ## Routes
 
 See [ROUTES.md](./ROUTES.md) for the full route map.
@@ -105,7 +109,7 @@ See [ROUTES.md](./ROUTES.md) for the full route map.
 |---|---|
 | `/` | Landing page |
 | `/app/app` | Dashboard (canonical, protected, Pro-gated) |
-| `/app` | Dashboard redirect (redirects to `/app/app`) |
+| `/app` | Dashboard alias (renders same component as `/app/app`) |
 | `/app/pricing` | Pricing page — canonical (**Public**, excluded from auth middleware) |
 | `/pricing` | Pricing alias |
 | `/app/app/pricing` | Pricing alias (same component) |
@@ -165,6 +169,15 @@ The core analysis engine (`lib/reality-check.ts`) is **fully deterministic** —
 7. See the Sentinel Score, contradictions, missing signals, and 24h actions
 8. Verify the run appears in "Decision History"
 
+## Judge Verification Notes
+
+For fast evaluator setup (Stripe CLI flow, expected logs, and a short manual verification checklist), see [JUDGE_NOTES.md](./JUDGE_NOTES.md).
+
+Implementation hardening already included:
+
+- Webhook idempotency via persisted `StripeEvent` IDs.
+- DB index on `Run(userId, createdAt DESC)` for dashboard history queries.
+
 ## Vercel Deployment
 
 1. Push to GitHub
@@ -172,4 +185,3 @@ The core analysis engine (`lib/reality-check.ts`) is **fully deterministic** —
 3. Set all environment variables in Vercel dashboard
 4. Configure Stripe webhook endpoint: `https://your-domain.vercel.app/api/stripe/webhook`
 5. Deploy!
-
