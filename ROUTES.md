@@ -9,7 +9,6 @@
 | `/app` | Dashboard alias (same component as `/app/app`) | Protected, Pro-gated |
 | `/app/pricing` | Pricing / upgrade page (canonical) | **Public** (excluded from middleware) |
 | `/pricing` | Pricing alias (renders same as `/app/pricing`) | Public |
-| `/app/app/pricing` | Pricing alias (same component as `/app/pricing`) | Public |
 
 ## API Routes
 
@@ -18,7 +17,7 @@
 | `/api/stripe/checkout` | POST | Creates Stripe Checkout session | Signed-in required |
 | `/api/stripe/webhook` | POST | Handles Stripe webhook events | Public (signature-verified) |
 | `/api/runs` | GET | List user's runs | Protected |
-| `/api/runs` | POST | Create a new reality check run | Protected, Pro-gated |
+| `/api/runs` | POST | Create a new reality check run (rate-limited: 10/min per user) | Protected, Pro-gated |
 | `/api/user/status` | GET | Returns `{ isPro: boolean }` | Protected |
 
 ## Middleware Logic

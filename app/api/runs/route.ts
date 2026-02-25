@@ -17,6 +17,31 @@ const RunInputSchema = z.object({
   industry: z.string().optional().default("Other"),
 });
 
+const RUN_RATE_LIMIT_WINDOW_MS = 60_000;
+const RUN_RATE_LIMIT_MAX_REQUESTS = 10;
+const runPostRateLimit = new Map<string, number[]>();
+
+function getRunPostRateLimitState(userId: string) {
+  const now = Date.now();
+  const bucket = (runPostRateLimit.get(userId) ?? []).filter(
+    (timestamp) => now - timestamp < RUN_RATE_LIMIT_WINDOW_MS
+  );
+
+  if (bucket.length >= RUN_RATE_LIMIT_MAX_REQUESTS) {
+    const oldestInWindow = bucket[0];
+    const retryAfterSeconds = Math.max(
+      1,
+      Math.ceil((RUN_RATE_LIMIT_WINDOW_MS - (now - oldestInWindow)) / 1000)
+    );
+    runPostRateLimit.set(userId, bucket);
+    return { limited: true, retryAfterSeconds };
+  }
+
+  bucket.push(now);
+  runPostRateLimit.set(userId, bucket);
+  return { limited: false, retryAfterSeconds: 0 };
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -51,6 +76,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Pro subscription required.", code: "PRO_REQUIRED", upgradeUrl: "/app/pricing" },
         { status: 402 }
+      );
+    }
+
+    const limit = getRunPostRateLimitState(user.id);
+    if (limit.limited) {
+      return NextResponse.json(
+        {
+          error: "Too many requests. Please wait and try again.",
+          code: "RATE_LIMITED",
+          retryAfterSeconds: limit.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(limit.retryAfterSeconds) },
+        }
       );
     }
 

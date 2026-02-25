@@ -99,6 +99,16 @@ export function Hero() {
             View pricing and upgrade options
           </a>
         </motion.div>
+
+        <motion.div
+          variants={itemVariants}
+          className="mt-8 w-full max-w-3xl rounded-2xl border border-white/10 bg-surface/40 backdrop-blur-sm px-5 py-4"
+        >
+          <p className="text-[11px] uppercase tracking-[0.16em] text-neutral-500 mb-2">How It Works</p>
+          <p className="text-sm text-neutral-300">
+            Define one objective and three KPIs. Run a deterministic check. Get a board-ready verdict with contradictions, missing signals, and 24-hour actions.
+          </p>
+        </motion.div>
       </motion.div>
     </section>
   );

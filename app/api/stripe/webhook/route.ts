@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+import { MissingEnvError, getRequiredEnv } from "@/lib/env";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -17,6 +18,20 @@ function isStripeEventSchemaDriftError(error: unknown) {
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
+  let webhookSecret: string;
+
+  try {
+    webhookSecret = getRequiredEnv("STRIPE_WEBHOOK_SECRET");
+  } catch (error) {
+    if (error instanceof MissingEnvError) {
+      console.error(`[webhook] ${error.message}`);
+      return NextResponse.json(
+        { error: error.message, code: "MISSING_ENV" },
+        { status: 500 }
+      );
+    }
+    throw error;
+  }
 
   if (!sig) {
     console.warn("[webhook] Missing stripe-signature header");
@@ -30,7 +45,7 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(
       body,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     );
   } catch (err) {
     console.error("[webhook] Signature verification failed:", err);

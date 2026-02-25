@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { getOrCreateUser } from "@/lib/user";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { MissingEnvError } from "@/lib/env";
 
 export async function POST() {
   try {
@@ -62,6 +63,10 @@ export async function POST() {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
+    if (error instanceof MissingEnvError) {
+      console.error(`[checkout] ${error.message}`);
+      return NextResponse.json({ error: error.message, code: "MISSING_ENV" }, { status: 500 });
+    }
     console.error("Stripe checkout error:", error);
     return NextResponse.json({ error: "Internal error", code: "INTERNAL_ERROR" }, { status: 500 });
   }

@@ -57,7 +57,7 @@ npm install
 ### 2. Set environment variables
 
 Copy `.env.example` to `.env` and fill in your values:
-(A env.example file is added just in case .env.example is not visible)
+(A file `env.example` is included just in case the original file is hidden)
 
 ```bash
 cp .env.example .env
@@ -112,7 +112,6 @@ See [ROUTES.md](./ROUTES.md) for the full route map.
 | `/app` | Dashboard alias (renders same component as `/app/app`) |
 | `/app/pricing` | Pricing page — canonical (**Public**, excluded from auth middleware) |
 | `/pricing` | Pricing alias |
-| `/app/app/pricing` | Pricing alias (same component) |
 | `/api/stripe/checkout` | POST — Creates Stripe Checkout session |
 | `/api/stripe/webhook` | POST — Handles Stripe webhook events |
 | `/api/runs` | GET — List runs, POST — Create a new run |
@@ -177,6 +176,12 @@ Implementation hardening already included:
 
 - Webhook idempotency via persisted `StripeEvent` IDs.
 - DB index on `Run(userId, createdAt DESC)` for dashboard history queries.
+- Fail-fast Stripe env checks (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`).
+- Lightweight in-memory rate limit on `POST /api/runs` (10 requests/min per user).
+
+Submission prep checklist:
+
+- See [SUBMISSION_CHECKLIST.md](./SUBMISSION_CHECKLIST.md) for judge-friendly artifact packaging in supported formats.
 
 ## Vercel Deployment
 

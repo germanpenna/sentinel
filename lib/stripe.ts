@@ -1,10 +1,12 @@
 import Stripe from "stripe";
+import { getRequiredEnv } from "@/lib/env";
 
 let _stripe: Stripe | null = null;
 
 export function getStripe(): Stripe {
   if (!_stripe) {
-    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    const stripeSecretKey = getRequiredEnv("STRIPE_SECRET_KEY");
+    _stripe = new Stripe(stripeSecretKey, {
       typescript: true,
     });
   }
