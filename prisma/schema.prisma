@@ -27,4 +27,12 @@ model Run {
   riskLevel    String
   warningsJson Json
   evidenceJson Json
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
 }

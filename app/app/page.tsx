@@ -456,7 +456,11 @@ function AppContent() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "Something went wrong.");
+        if (res.status === 402 && data.upgradeUrl) {
+          setError("PRO_REQUIRED");
+        } else {
+          setError(data.error ?? "Something went wrong.");
+        }
       } else {
         setLastDurationMs(elapsed);
         await fetchRuns();
@@ -611,7 +615,20 @@ function AppContent() {
                   </select>
                 </div>
 
-                {error && <p className="text-rose-400 text-sm">{error}</p>}
+                {error && (
+                  error === "PRO_REQUIRED" ? (
+                    <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-4 flex items-center gap-3">
+                      <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                      <div className="flex-1">
+                        <p className="text-sm text-amber-300 font-medium">Pro subscription required</p>
+                        <p className="text-xs text-neutral-400 mt-0.5">Upgrade to run unlimited Reality Checks.</p>
+                      </div>
+                      <a href="/app/pricing" className="shrink-0 px-4 py-1.5 bg-accent text-black text-sm font-semibold rounded-lg hover:bg-accent/90 transition-colors">Upgrade</a>
+                    </div>
+                  ) : (
+                    <p className="text-rose-400 text-sm">{error}</p>
+                  )
+                )}
 
                 <div className="flex gap-3">
                   <button
@@ -695,7 +712,20 @@ function AppContent() {
               </select>
             </div>
 
-            {error && <p className="text-rose-400 text-sm">{error}</p>}
+            {error && (
+                  error === "PRO_REQUIRED" ? (
+                    <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-4 flex items-center gap-3">
+                      <svg className="w-5 h-5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                      <div className="flex-1">
+                        <p className="text-sm text-amber-300 font-medium">Pro subscription required</p>
+                        <p className="text-xs text-neutral-400 mt-0.5">Upgrade to run unlimited Reality Checks.</p>
+                      </div>
+                      <a href="/app/pricing" className="shrink-0 px-4 py-1.5 bg-accent text-black text-sm font-semibold rounded-lg hover:bg-accent/90 transition-colors">Upgrade</a>
+                    </div>
+                  ) : (
+                    <p className="text-rose-400 text-sm">{error}</p>
+                  )
+                )}
 
             <div className="flex gap-3">
               <button

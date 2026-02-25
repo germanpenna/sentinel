@@ -5,8 +5,8 @@
 | Route | Description | Auth |
 |---|---|---|
 | `/` | Landing page | Public |
-| `/app` | Dashboard (canonical) | Protected, Pro-gated |
-| `/app/app` | Dashboard alias (handles Stripe checkout redirect) | Protected, Pro-gated |
+| `/app/app` | Dashboard (canonical) | Protected, Pro-gated |
+| `/app` | Dashboard redirect (redirects to `/app/app`) | Protected, Pro-gated |
 | `/app/pricing` | Pricing / upgrade page (canonical) | **Public** (excluded from middleware) |
 | `/pricing` | Pricing alias (renders same as `/app/pricing`) | Public |
 | `/app/app/pricing` | Pricing alias (same component as `/app/pricing`) | Public |

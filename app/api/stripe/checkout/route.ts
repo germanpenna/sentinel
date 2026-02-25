@@ -10,7 +10,7 @@ export async function POST() {
   try {
     const user = await getOrCreateUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
     }
 
     let stripeCustomerId = user.stripeCustomerId;
@@ -56,6 +56,6 @@ export async function POST() {
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error("Stripe checkout error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal error", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

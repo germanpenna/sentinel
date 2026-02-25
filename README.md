@@ -20,7 +20,7 @@ sentinel/
 ├── app/
 │   ├── page.tsx              # Landing page (public)
 │   ├── app/
-│   │   ├── page.tsx          # Dashboard canonical (protected, Pro-gated)
+│   │   ├── page.tsx          # Dashboard (canonical, protected, Pro-gated)
 │   │   └── pricing/
 │   │       └── page.tsx      # Pricing page (public under /app)
 │   ├── pricing/
@@ -104,8 +104,8 @@ See [ROUTES.md](./ROUTES.md) for the full route map.
 | Route | Description |
 |---|---|
 | `/` | Landing page |
-| `/app` | Dashboard (canonical, protected, Pro-gated) |
-| `/app/app` | Dashboard alias (handles Stripe checkout redirect) |
+| `/app/app` | Dashboard (canonical, protected, Pro-gated) |
+| `/app` | Dashboard redirect (redirects to `/app/app`) |
 | `/app/pricing` | Pricing page — canonical (**Public**, excluded from auth middleware) |
 | `/pricing` | Pricing alias |
 | `/app/app/pricing` | Pricing alias (same component) |
@@ -146,7 +146,7 @@ The core analysis engine (`lib/reality-check.ts`) is **fully deterministic** —
 
 1. User visits the landing page (`/`)
 2. Signs up / logs in via Clerk
-3. Accesses `/app` — sees Pro gate if not paid
+3. Accesses `/app/app` — sees Pro gate if not paid
 4. Clicks "Upgrade to Pro" → Stripe Checkout ($49 one-time)
 5. After payment, webhook sets `isPro = true` in DB
 6. User is redirected to `/app/app?checkout=success`

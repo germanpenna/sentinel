@@ -92,9 +92,10 @@ export function Hero() {
           </a>
           <a
             href="/pricing"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-white/10 text-neutral-400 text-sm font-medium hover:text-neutral-200 hover:border-white/20 transition-all duration-300"
+            className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-white/5 backdrop-blur-md border border-accent/20 text-accent font-medium hover:bg-accent/10 hover:border-accent/40 transition-all duration-300"
           >
-            See pricing →
+            See pricing — $49 one-time
+            <ArrowRight className="w-4 h-4" />
           </a>
         </motion.div>
       </motion.div>

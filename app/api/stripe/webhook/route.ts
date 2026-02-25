@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   if (!sig) {
     console.warn("[webhook] Missing stripe-signature header");
-    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+    return NextResponse.json({ error: "Missing signature", code: "MISSING_SIGNATURE" }, { status: 400 });
   }
 
   let event: Stripe.Event;
@@ -26,10 +26,18 @@ export async function POST(req: NextRequest) {
     );
   } catch (err) {
     console.error("[webhook] Signature verification failed:", err);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid signature", code: "INVALID_SIGNATURE" }, { status: 400 });
   }
 
   console.log(`[webhook] Received event: ${event.type}`);
+
+  const existing = await prisma.stripeEvent.findUnique({ where: { id: event.id } });
+  if (existing) {
+    console.log(`[webhook] Skipping already-processed event: ${event.id}`);
+    return NextResponse.json({ received: true, deduplicated: true });
+  }
+
+  await prisma.stripeEvent.create({ data: { id: event.id, type: event.type } });
 
   if (
     event.type === "checkout.session.completed" ||

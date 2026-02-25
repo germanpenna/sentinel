@@ -8,12 +8,12 @@ export async function GET() {
   try {
     const user = await getOrCreateUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
     }
 
     return NextResponse.json({ isPro: user.isPro });
   } catch (error) {
     console.error("GET /api/user/status error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal error", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }

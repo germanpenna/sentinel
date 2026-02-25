@@ -24,7 +24,7 @@ export async function GET() {
   try {
     const user = await getOrCreateUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
     }
 
     const runs = await prisma.run.findMany({
@@ -36,7 +36,7 @@ export async function GET() {
     return NextResponse.json({ runs });
   } catch (error) {
     console.error("GET /api/runs error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal error", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
 
@@ -44,12 +44,12 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getOrCreateUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
     }
 
     if (!user.isPro) {
       return NextResponse.json(
-        { error: "Pro subscription required.", upgradeUrl: "/app/pricing" },
+        { error: "Pro subscription required.", code: "PRO_REQUIRED", upgradeUrl: "/app/pricing" },
         { status: 402 }
       );
     }
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       const messages = parsed.error.issues.map((i) => i.message);
       return NextResponse.json(
-        { error: messages.join(" "), details: parsed.error.flatten().fieldErrors },
+        { error: messages.join(" "), code: "VALIDATION_ERROR", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
@@ -94,6 +94,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ run });
   } catch (error) {
     console.error("POST /api/runs error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal error", code: "INTERNAL_ERROR" }, { status: 500 });
   }
 }
